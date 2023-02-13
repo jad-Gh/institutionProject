@@ -1,6 +1,46 @@
 @import "~bootstrap/scss/bootstrap";
 
 .App {
+    
+}
+
+.login{
+    background-color: #B0AFB1 !important;
+    height: 100vh !important;
+    padding-top: 15vh;
     text-align: center;
+
+    .card{
+        max-width: 500px;
+        margin: 0 auto !important;
+        border-radius: 20px !important;
+
+        .card-title{
+            font-size: 27px !important;
+        }
+
+        .dynamic-spacing{
+            margin: 10px 30px !important;
+            padding: 10px 30px !important;
+
+            @media screen and (max-width:600px){
+                margin: auto !important;
+                padding: auto !important;
+            }
+        }
+    }
+
+}
+
+.form-control{
+    &:focus{
+        // border: #191F6C !important;
+        // box-shadow: 0 0 0 2px #191f6ccf;
+    }
+
+}
+
+.btn-primary{
+    background-color: #191F6C !important;
 }
   
