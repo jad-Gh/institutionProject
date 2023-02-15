@@ -1,22 +1,41 @@
-import { useState } from "react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { Button, Card, Col, Container, Form, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { CONFIG, LOGIN } from "../API";
 import logo from "../Assets/mdsl_logo.png";
-
-
+import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
 const Login = ()=>{
 
     const [state,setState] = useState({
         username:"",
         password:"",
-        error:"something went wrong",
+        error:"",
         loading:false,
     });
     const navigate = useNavigate();
 
     const signIn = ()=>{
         setState({...state,loading:true})
-        navigate("/institution")
+
+        let postData = {
+            username:state.username,
+            password:state.password
+        }
+
+        axios.post(LOGIN,postData,CONFIG)
+        .then((res)=>{
+            localStorage.setItem("token",res?.headers?.jwttoken)
+            navigate("/institution")
+        }).catch((err)=>{
+        
+            if (err?.response?.status===401){
+                setState({...state,error:"Invalid Credentials",loading:false,})
+            } else {
+                setState({...state,error:"Something went Wrong",loading:false,})
+            }
+            
+        })
     }
 
     return (
@@ -74,7 +93,7 @@ const Login = ()=>{
 
                                     <Row>
                                         <Col className="text-danger">
-                                            {state.error}
+                                            {state.error} 
                                         </Col>
                                     </Row>
 
@@ -83,7 +102,7 @@ const Login = ()=>{
                                     disabled={!state.username || !state.password  || state.loading}
                                     onClick={()=>{signIn()}}
                                     >
-                                        Login
+                                        {!state.loading ? "Login" : <HourglassEmptyIcon/>}
                                     </Button>
                                 </Row>   
                             </Card>

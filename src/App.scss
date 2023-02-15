@@ -67,6 +67,7 @@
 .MuiTableHead-root{
     th{
         font-weight: 700 !important;
+        z-index: unset !important;
         .MuiTableCell-root{
             border: 2px solid black !important;
         }
@@ -99,6 +100,3 @@
     sans-serif !important;
 }
 
-.MTableHeader-header-13{
-    z-index: unset !important;
-}
