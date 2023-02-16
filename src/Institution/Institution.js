@@ -7,10 +7,11 @@ import Skeleton from "react-loading-skeleton";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { toast } from "react-toastify";
-import { CONFIG, DELETE_INSTITUTION, GET_ACTIVE_INSTITUTIONS, GET_INSTITUTIONS } from "../API";
+import { CONFIG, DELETE_INSTITUTION, GET_ACTIVE_INSTITUTIONS, GET_INSTITUTIONS,UPDATE_INSTITUTION_STATUS } from "../API";
 import logo from "../Assets/mdsl_logo_cropped.png";
 import NavigationBar from "../NavigationBar/NavigationBar";
 import AddInstitution from "./AddInstitution";
+import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
 
 
 
@@ -20,9 +21,12 @@ const Institution = ()=>{
         loading:false,
         dropdownLoading:false,
         tableLoading:false,
+
         deleteModalOpen:false,
+
         addInstitution:false,
         editInstituion:false,
+
         activeInstitutions:[],
         tableData:[],
 
@@ -33,87 +37,103 @@ const Institution = ()=>{
     const navigator = useNavigate();
 
     const toggleDeleteModal = (row)=>{
-        setState({...state,deleteModalOpen:!state.deleteModalOpen,instIdToDelete:row?.instId,instNameToDelete:row?.instName});
+        setState(prevState => {
+            return {...prevState,deleteModalOpen:!state.deleteModalOpen,instIdToDelete:row?.instId,instNameToDelete:row?.instName};
+        });
     }
 
     const toggleAddInstitution = ()=>{
-        setState({...state,addInstitution:!state.addInstitution});
+        setState(prevState => {
+            return {...prevState,addInstitution:!state.addInstitution};
+        });
     }
 
     const getActiveInstitutions = ()=>{
-        setState({...state,dropdownLoading:true})
+        setState(prevState => {
+            return {...prevState,dropdownLoading:true};
+        });
 
         CONFIG.headers.Authorization = "Bearer " + localStorage.getItem("token");
         axios.get(GET_ACTIVE_INSTITUTIONS,CONFIG)
         .then((res)=>{
-            setState({
-                ...state,
-                dropdownLoading:false,
-                activeInstitutions:res?.data?.map((item)=>{
-                    return {
-                        label:item?.instName,
-                        value:item?.instId
-                    }
-                })
-            })
+            setState(prevState => {
+                return {...prevState,
+                    dropdownLoading:false,
+                    activeInstitutions:res?.data?.map((item)=>{
+                        return {
+                            label:item?.instName,
+                            value:item?.instId
+                        }
+                    })               
+                };
+            });
+            
         }).catch((err)=>{
             if (err?.response?.status===401){
                 localStorage.clear();
                 navigator("/")
             }else {
                 toast.error(err?.response?.data?.message ?? "Error Occured Fetching Active Institutions")
-                setState({...state,dropdownLoading:false,})
+                setState(prevState => {
+                    return {...prevState,dropdownLoading:false,};
+                });
             }
         })
     }
 
     const getAllInstitutions = ()=>{
-        setState({...state,tableLoading:true})
+        setState(prevState => {
+            return {...prevState,tableLoading:true};
+        });
 
         CONFIG.headers.Authorization = "Bearer " + localStorage.getItem("token");
         axios.get(GET_INSTITUTIONS,CONFIG)
         .then((res)=>{
-            setState({
-                ...state,
-                tableLoading:false,
-                tableData:res?.data?.map((item,index)=>{
-                    return {
-                       ...item,
-                       enabled:<Form.Check 
-                                type="switch"
-                                id={`custom-switch${index}`}
-                                label={item?.instStatus==="1" ? "Enabled" : "Disabled"}
-                                checked={item?.instStatus==="1"}
-                                onClick={()=>{}}
-                                disabled={state.loading}
-                                />
-                    }
-                })
-            })
+            setState(prevState => {
+                return {...prevState,
+                    dropdownLoading:true,
+                    tableLoading:false,
+                    tableData:res?.data?.map((item,index)=>{
+                        return {
+                           ...item,
+                           enabled:<Form.Check 
+                                    type="switch"
+                                    id={`custom-switch${index}`}
+                                    label={item?.instStatus==="1" ? "Enabled" : "Disabled"}
+                                    checked={item?.instStatus==="1"}
+                                    onClick={()=>{
+                                        if (!state.loading)
+                                        changeStatus(item?.instId,item?.instStatus==="1" ? "0":"1")
+                                    }}
+                                    disabled={state.loading}
+                                    />
+                        }
+                    })
+                };
+            });
         }).catch((err)=>{
             if (err?.response?.status===401){
                 localStorage.clear();
                 navigator("/")
             }else {
                 toast.error(err?.response?.data?.message ?? "Error Occured Fetching Table Institutions")
-                setState({...state,tableLoading:false,})
+                setState(prevState => {
+                    return {...prevState,tableLoading:false,};
+                });
             }
         })
     }
 
     const deleteInstitution = ()=>{
-        setState({...state,loading:true})
-
+        setState(prevState => {
+            return {...prevState,loading:true,};
+        });
         CONFIG.headers.Authorization = "Bearer " + localStorage.getItem("token");
         axios.delete(`${DELETE_INSTITUTION}/${state.instIdToDelete}`,CONFIG)
         .then((res)=>{
-            // setState({
-            //     ...state,
-            //    loading:false,
-            //    deleteModalOpen:false,
-            //    instIdToDelete:null,
-            //    instNameToDelete:null
-            // })
+            setState(prevState => {
+                return {...prevState,loading:false,};
+            });
             toggleDeleteModal()
             toast.success("Institution Deleted Successfully")
             getAllInstitutions();
@@ -130,7 +150,45 @@ const Institution = ()=>{
                 } else {
                     toast.error("Error Occured Deleting Institution")
                 }
-                setState({...state,loading:false,})
+                setState(prevState => {
+                    return {...prevState,loading:false,};
+                });
+            }
+        })
+    }
+
+    const changeStatus = (id,status)=>{
+        setState(prevState => {
+            return {...prevState,loading:true,};
+        });
+        CONFIG.headers.Authorization = "Bearer " + localStorage.getItem("token");
+        let data = {
+            id:id,
+            status:status,
+        }
+        axios.post(`${UPDATE_INSTITUTION_STATUS}`,data,CONFIG)
+        .then((res)=>{
+            setState(prevState => {
+                return {...prevState,loading:false,};
+            });
+            toast.success("Institution Status Updated Successfully")
+            getAllInstitutions();
+            getActiveInstitutions();
+        }).catch((err)=>{
+            if (err?.response?.status===401){
+                localStorage.clear();
+                navigator("/")
+            }else {
+                if (err?.response?.data?.errors.length > 0){
+                    err?.response?.data?.errors.forEach((item)=>{
+                        toast.error(item)
+                    })
+                } else {
+                    toast.error("Error Occured Updating Institution Status")
+                }
+                setState(prevState => {
+                    return {...prevState,loading:false,};
+                });
             }
         })
     }
@@ -161,24 +219,32 @@ const Institution = ()=>{
                         />
                     </Col>
                     <Col sm="8" className="p-2">
-                        <Row >
-                            <Col className="d-flex justify-content-end">
-                                <Button 
-                                className="add-btn"
-                                onClick={()=>{toggleAddInstitution()}}
-                                >
-                                    + Add
-                                </Button>
-                            </Col>
+                        <Row className="justify-content-end"> 
+                            <Button 
+                            className="add-btn"
+                            variant="success"
+                            disabled={state.loading}
+                            onClick={()=>{}}
+                            >
+                                Export
+                            </Button> 
+                            <Button 
+                            className="add-btn mx-2"
+                            disabled={state.loading}
+                            onClick={()=>{toggleAddInstitution()}}
+                            >
+                                + Add
+                            </Button> 
                         </Row>
                     </Col>
                 </Row>
                 <Row className="mb-2">
-                    {state.tableLoading ?
-                    <Col md="12" className="text-center">
-                        Loading...
-                    </Col>
-                    :
+                    {
+                    // state.tableLoading ?
+                    // <Col md="12" className="text-center">
+                    //     Loading...
+                    // </Col>
+                    // :
                     <MaterialTable
                         columns={[
                             { title: 'Name', field: 'instName' },
@@ -187,7 +253,7 @@ const Institution = ()=>{
                            
                         ]}
                         data={state.tableData}  
-                          
+                        isLoading={state.tableLoading}
                         actions={[
                             {
                                 icon: "edit",
@@ -206,9 +272,8 @@ const Institution = ()=>{
                             search:false,
                             actionsColumnIndex:6,
                             showTitle:false,
-                            pageSize:10,
-                            pageSizeOptions:[],
-
+                            pageSize:5,
+                            // pageSizeOptions:[],
                         }}
                         />}
                 </Row>
@@ -235,11 +300,11 @@ const Institution = ()=>{
                     </p>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={toggleDeleteModal}>
+                    <Button variant="secondary" onClick={toggleDeleteModal} disabled={state.loading}>
                         Close
                     </Button>
                     <Button variant="danger" onClick={deleteInstitution} disabled={state.loading}>
-                        Delete
+                        {state.loading ? <HourglassEmptyIcon/>:"Delete"}
                     </Button>
                 </Modal.Footer>
                 
