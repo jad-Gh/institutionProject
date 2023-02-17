@@ -19,3 +19,5 @@ export const ADD_INSTITUTION = DEV_URL + "/v1/config/institutions";
 export const DELETE_INSTITUTION = DEV_URL + "/v1/config/institutions";
 export const GET_ACTIVE_INSTITUTIONS = DEV_URL + "/v1/config/institutions/active";
 export const UPDATE_INSTITUTION_STATUS = DEV_URL + "/v1/config/institutions/status-change";
+
+export const COUNTRY_LIST = DEV_URL + "/v1/lookup/countries";

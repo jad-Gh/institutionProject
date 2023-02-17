@@ -1,6 +1,10 @@
-import { useState } from "react"
+import axios from "axios"
+import { useEffect, useState } from "react"
 import { Button, Col, Container, Form, Row } from "react-bootstrap"
 import { Step, Stepper } from "react-form-stepper"
+import Select from "react-select"
+import { toast } from "react-toastify"
+import { ADD_INSTITUTION, CONFIG, COUNTRY_LIST } from "../API"
 
 
 const AddInstitution = (props)=>{
@@ -12,7 +16,8 @@ const AddInstitution = (props)=>{
         instCode:"",
         instName:"",
         instStatus:"0",
-        countryId:"",
+        countrySelected:"",
+        countryList:[],
         daysToLockUser:"",
         sessionTimeout:"",
         customerIdLength:"",
@@ -28,6 +33,28 @@ const AddInstitution = (props)=>{
         ecomOutputPath:"",
         embossingOutputPath:"",
         encryptionKey:"",
+
+        hostIntegration:"0",
+        hostName:"",
+        hostUrl:"",
+        hostType:"",
+        requestBody:"",
+        responseBody:"",
+
+        daysToChangePassword:"",
+        warningChangePassword:"",
+        passwordLength:"",
+        passwordHistory:"",
+        upperFlag:"0",
+        upperCount:"",
+        lowerCount:"",
+        lowerFlag:"0",
+        numberCount:"",
+        numberFlag:"0",
+        specialCharactersCount:"",
+        specialCharactersFlag:"0",
+        specialCharactersList:"",
+
 
     })
 
@@ -53,6 +80,116 @@ const AddInstitution = (props)=>{
             });
         }  
     }
+
+    const getAllCountries = ()=>{
+        setState(prevState => {
+            return {...prevState,
+                loading:true,};
+        });
+
+        CONFIG.headers.Authorization = "Bearer " + localStorage.getItem("token");
+        axios.get(COUNTRY_LIST,CONFIG)
+        .then((res)=>{
+
+            setState(prevState => {
+                return {...prevState,
+                    loading:false,
+                    countryList:res?.data?.map((item)=>{
+                        return {
+                            label:item?.countryDesc,
+                            value:item?.countryId
+                        }
+                    })
+                };
+            });
+
+        }).catch((err)=>{
+            toast.error("Error Loading Countries")
+            setState(prevState => {
+                return {...prevState,
+                    loading:false,};
+            });
+        })
+    }
+
+    const addInstitution = ()=>{
+        setState(prevState => {
+            return {...prevState,
+                loading:true,};
+        });
+        let data = {
+            "accountNbLength": state.accountNbLength,
+            "adhocRnNewExp": state.adhocRnNewExp,
+            "adhocRpNewExp": state.adhocRpNewExp,
+            "countryId": state.countrySelected?.value,
+            "customerIdLength": state.customerIdLength,
+            "daysToChangePassword": state.daysToChangePassword,
+            "daysToLockUser": state.daysToLockUser,
+            "ecomOutputPath": state.ecomOutputPath,
+            "embossingOutputPath": state.embossingOutputPath,
+            "encryptionKey": state.encryptionKey,
+            "hostConfigurations": {
+              "hostId": 0,
+              "hostName": state.hostName,
+              "hostType": state.hostType,
+              "hostUrl": state.hostUrl,
+              "requestBody": state.requestBody,
+              "responseBody": state.responseBody
+            },
+            "hostIntegration": state.hostIntegration,
+            "hsmEncPinLength": state.hsmEncPinLength,
+            "hsmIp": state.hsmIp,
+            "hsmMsgHeaderLength": state.hsmMsgHeaderLength,
+            "hsmPort": state.hsmPort,
+            "instCode": state.instCode,
+            "instId": 0,
+            "instName": state.instName,
+            "instStatus": state.instStatus,
+            "nationalIdLength": state.nationalIdLength,
+            "passwordPolicies": {
+              "lowerCount": state.lowerCount,
+              "lowerFlag": state.lowerFlag,
+              "numberCount": state.numberCount,
+              "numberFlag": state.numberFlag,
+              "passwordHistory": state.passwordHistory,
+              "passwordLength": state.passwordLength,
+              "policyId": state.policyId,
+              "specialCharactersCount": state.specialCharactersCount,
+              "specialCharactersFlag": state.specialCharactersFlag,
+              "specialCharactersList": state.specialCharactersList,
+              "upperCount": state.upperCount,
+              "upperFlag": state.upperFlag
+            },
+            "renewalOutputPath": state.renewalOutputPath,
+            "sessionTimeout": state.sessionTimeout,
+            "warningChangePassword": state.warningChangePassword
+        }
+        axios.post(ADD_INSTITUTION,data,CONFIG)
+        .then((res)=>{
+            toast.success("Institution Added Successfully!");
+            props.toggleAddInstitution()
+        }).catch((err)=>{
+            if (err?.response?.status===401){
+                localStorage.clear();
+                navigator("/")
+            }else {
+                if (err?.response?.data?.errors.length > 0){
+                    err?.response?.data?.errors.forEach((item)=>{
+                        toast.error(item)
+                    })
+                } else {
+                    toast.error("Error Occured Adding Institution")
+                }
+                setState(prevState => {
+                    return {...prevState,loading:false,};
+                });
+            }
+        })
+    }
+
+    useEffect(()=>{
+        getAllCountries()
+    },[])
 
 
     return (
@@ -80,7 +217,7 @@ const AddInstitution = (props)=>{
                     <Step label="Privacy Policy" />
                 </Stepper>
             </Row>
-            <Row>
+            <Col md="12" className="scrollable-container px-1">
                 {state.activetab ===0 && 
                 <>
                     <Row>
@@ -92,7 +229,7 @@ const AddInstitution = (props)=>{
                                 name="instCode"
                                 maxLength={"100"}
                                 value={state.instCode}
-                                onChange={onChangeHandler}
+                                onChange={numberOnChangeHandler}
                             />
                         </Col>
                         <Col md="4">
@@ -125,14 +262,25 @@ const AddInstitution = (props)=>{
                     </Row>
                     <Row>
                         <Col md="4">
-                            <Form.Label htmlFor="countryId">Country ID</Form.Label>
-                            <Form.Control
-                                type="text"
-                                id="countryId"
-                                name="countryId"
-                                maxLength={"100"}
-                                value={state.countryId}
-                                onChange={numberOnChangeHandler}
+                            <Form.Label htmlFor="countryId">Country</Form.Label>
+                            <Select
+                                className="basic-single "
+                                classNamePrefix="select"
+                                placeholder="Select a Country..."
+                                // isDisabled={isDisabled}
+                                isLoading={state.loading}
+                                isClearable={true}
+                                // isRtl={isRtl}
+                                value={state.countrySelected}
+                                isSearchable={true}
+                                onChange={(e)=>{
+                                    setState(prevState => {
+                                    return {...prevState,
+                                        countrySelected:e,};
+                                });
+                            }}
+                                // name="color"
+                                options={state.countryList}
                             />
                         </Col>
                         <Col md="4">
@@ -224,7 +372,7 @@ const AddInstitution = (props)=>{
                                 name="hsmPort"
                                 maxLength={"100"}
                                 value={state.hsmPort}
-                                onChange={onChangeHandler}
+                                onChange={numberOnChangeHandler}
                             />
                         </Col>
                     </Row>
@@ -315,15 +463,280 @@ const AddInstitution = (props)=>{
                 }
                 {state.activetab ===1 && 
                 <>
-                
+                    <Row>
+                        <Col md="4">
+                            {/* <Form.Label htmlFor="hostIntegration">Has Host Integration</Form.Label> */}
+                            <Form.Check 
+                                type={"checkbox"}
+                                id={`hostIntegration`}
+                                label={`Has Host Integration`}
+                                value={state.hostIntegration === "1"}
+                                onChange={(e)=>{ 
+                                    setState(prevState => {
+                                        return {...prevState,
+                                            hostIntegration: !e.target.checked ? "0":"1",};
+                                    });
+                                }}
+                            />
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md="4">
+                            <Form.Label htmlFor="renewalOutputPath">Host Name</Form.Label>
+                            <Form.Control
+                                type="text"
+                                id="hostName"
+                                name="hostName"
+                                maxLength={"100"}
+                                value={state.hostName}
+                                onChange={onChangeHandler}
+                                disabled={state.hostIntegration !== "1"}
+                            />
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="hostType">Host Type</Form.Label>
+                            <Form.Control
+                                type="text"
+                                id="hostType"
+                                name="hostType"
+                                maxLength={"100"}
+                                value={state.hostType}
+                                onChange={onChangeHandler}
+                                disabled={state.hostIntegration !== "1"}
+                            />
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="hostUrl">Host URL</Form.Label>
+                            <Form.Control
+                                type="text"
+                                id="hostUrl"
+                                name="hostUrl"
+                                maxLength={"100"}
+                                value={state.hostUrl}
+                                onChange={onChangeHandler}
+                                disabled={state.hostIntegration !== "1"}
+
+                            />
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md="4">
+                            <Form.Label htmlFor="requestBody">Request Body</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={"3"}
+                                id="requestBody"
+                                name="requestBody"
+                                maxLength={"500"}
+                                value={state.requestBody}
+                                onChange={onChangeHandler}
+                                disabled={state.hostIntegration !== "1"}
+                            />
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="responseBody">Response Body</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={"3"}
+                                id="responseBody"
+                                name="responseBody"
+                                maxLength={"500"}
+                                value={state.responseBody}
+                                onChange={onChangeHandler}
+                                disabled={state.hostIntegration !== "1"}
+                            />
+                        </Col>
+                    </Row>
                 </>
                 }
-                {state.activetab ===3 && 
+                {state.activetab ===2 && 
                 <>
-                
+                    <Row>
+                        <Col md="4">
+                            <Form.Label htmlFor="daysToChangePassword">Days To Change Password</Form.Label>
+                            <Form.Control
+                                type="text"
+                                id="daysToChangePassword"
+                                name="daysToChangePassword"
+                                maxLength={"100"}
+                                value={state.daysToChangePassword}
+                                onChange={numberOnChangeHandler}
+                            />
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="warningChangePassword">Password Warning</Form.Label>
+                            <Form.Control
+                                type="text"
+                                id="warningChangePassword"
+                                name="warningChangePassword"
+                                maxLength={"100"}
+                                value={state.warningChangePassword}
+                                onChange={numberOnChangeHandler}
+                            />
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="passwordLength">Password Length</Form.Label>
+                            <Form.Control
+                                type="text"
+                                id="passwordLength"
+                                name="passwordLength"
+                                maxLength={"100"}
+                                value={state.passwordLength}
+                                onChange={numberOnChangeHandler}
+                            />
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md="4">
+                            <Form.Label htmlFor="passwordHistory">Password History</Form.Label>
+                            <Form.Control
+                                type="text"
+                                id="passwordHistory"
+                                name="passwordHistory"
+                                maxLength={"100"}
+                                value={state.passwordHistory}
+                                onChange={numberOnChangeHandler}
+                            />
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="upperCount">Capital Letters</Form.Label>
+                            <Row className="d-flex">
+                                <Col sm="3" className="d-flex align-items-center">
+                                    <Form.Check 
+                                        type={"checkbox"}
+                                        id={`upperFlag`}
+                                        label={state.upperFlag === "1"? "On":"Off"}
+                                        value={state.upperFlag === "1"}
+                                        onChange={(e)=>{ 
+                                            setState(prevState => {
+                                                return {...prevState,
+                                                    upperFlag: !e.target.checked ? "0":"1",};
+                                            });
+                                        }}
+                                    />
+                                </Col>
+                                <Col sm="9">
+                                    <Form.Control
+                                        type="text"
+                                        id="upperCount"
+                                        name="upperCount"
+                                        maxLength={"100"}
+                                        value={state.upperCount}
+                                        onChange={numberOnChangeHandler}
+                                        disabled={state.upperFlag!=="1"}
+                                    />
+                                </Col>
+                            </Row>
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="lowerCount">Lowercase Letters</Form.Label>
+                            <Row className="d-flex">
+                                <Col sm="3" className="d-flex align-items-center">
+                                    <Form.Check 
+                                        type={"checkbox"}
+                                        id={`lowerFlag`}
+                                        label={state.lowerFlag === "1" ? "On": "Off"}
+                                        value={state.lowerFlag === "1"}
+                                        onChange={(e)=>{ 
+                                            setState(prevState => {
+                                                return {...prevState,
+                                                    lowerFlag: !e.target.checked ? "0":"1",};
+                                            });
+                                        }}
+                                    />
+                                </Col>
+                                <Col sm="9">
+                                    <Form.Control
+                                        type="text"
+                                        id="lowerCount"
+                                        name="lowerCount"
+                                        maxLength={"100"}
+                                        value={state.lowerCount}
+                                        onChange={numberOnChangeHandler}
+                                        disabled={state.lowerFlag!=="1"}
+                                    />
+                                </Col>
+                            </Row>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md="4">
+                            <Form.Label htmlFor="numberCount">Number Count</Form.Label>
+                            <Row className="d-flex">
+                                <Col sm="3" className="d-flex align-items-center">
+                                    <Form.Check 
+                                        type={"checkbox"}
+                                        id={`numberFlag`}
+                                        label={state.numberFlag === "1" ? "On":"Off"}
+                                        value={state.numberFlag === "1"}
+                                        onChange={(e)=>{ 
+                                            setState(prevState => {
+                                                return {...prevState,
+                                                    numberFlag: !e.target.checked ? "0":"1",};
+                                            });
+                                        }}
+                                    />
+                                </Col>
+                                <Col sm="9">
+                                    <Form.Control
+                                        type="text"
+                                        id="numberCount"
+                                        name="numberCount"
+                                        maxLength={"100"}
+                                        value={state.numberCount}
+                                        onChange={numberOnChangeHandler}
+                                        disabled={state.numberFlag!=="1"}
+                                    />
+                                </Col>
+                            </Row>
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="specialCharactersCount">Special Chars. Count</Form.Label>
+                            <Row className="d-flex">
+                                <Col sm="3" className="d-flex align-items-center">
+                                    <Form.Check 
+                                        type={"checkbox"}
+                                        id={`specialCharactersFlag`}
+                                        label={state.specialCharactersFlag === "1" ? "On":"Off"}
+                                        value={state.specialCharactersFlag === "1"}
+                                        onChange={(e)=>{ 
+                                            setState(prevState => {
+                                                return {...prevState,
+                                                    specialCharactersFlag: !e.target.checked ? "0":"1",};
+                                            });
+                                        }}
+                                    />
+                                </Col>
+                                <Col sm="9">
+                                    <Form.Control
+                                        type="text"
+                                        id="specialCharactersCount"
+                                        name="specialCharactersCount"
+                                        maxLength={"100"}
+                                        value={state.specialCharactersCount}
+                                        onChange={numberOnChangeHandler}
+                                        disabled={state.specialCharactersFlag!=="1"}
+                                    />
+                                </Col>
+                            </Row>
+
+                        </Col>
+                        <Col md="4">
+                            <Form.Label htmlFor="specialCharactersList">Special Chars. List</Form.Label>
+                            <Form.Control
+                                type="text"
+                                id="specialCharactersList"
+                                name="specialCharactersList"
+                                maxLength={"100"}
+                                value={state.specialCharactersList}
+                                onChange={onChangeHandler}
+                                disabled={state.specialCharactersFlag !== "1"}
+                            />
+                        </Col>
+                    </Row>
                 </>
                 }
-            </Row>
+            </Col>
             <Row>
                 <Col md="3">
                     <Row className="d-flex justify-content-start my-1">
@@ -347,7 +760,7 @@ const AddInstitution = (props)=>{
                         <Col>
                             {state.activetab===2 
                             ? 
-                            <Button variant="primary" className="w-100" onClick={()=>{}}>
+                            <Button variant="primary" className="w-100" onClick={()=>{addInstitution()}} disabled={state.loading}>
                                 Add
                             </Button>
                             :

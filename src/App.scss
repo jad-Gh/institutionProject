@@ -105,3 +105,9 @@ background-color: #191F6C !important;
 border-color: #191F6C !important;
 }
 
+.scrollable-container{
+    height: 50vh;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
