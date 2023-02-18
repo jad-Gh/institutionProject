@@ -12,6 +12,8 @@ import logo from "../Assets/mdsl_logo_cropped.png";
 import NavigationBar from "../NavigationBar/NavigationBar";
 import AddInstitution from "./AddInstitution";
 import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
+import { CSVLink } from "react-csv";
+import EditInstitution from "./EditInstitution";
 
 
 
@@ -25,7 +27,8 @@ const Institution = ()=>{
         deleteModalOpen:false,
 
         addInstitution:false,
-        editInstituion:false,
+        editInstitution:false,
+        institutionToEdit:null,
 
         activeInstitutions:[],
         tableData:[],
@@ -42,10 +45,26 @@ const Institution = ()=>{
         });
     }
 
-    const toggleAddInstitution = ()=>{
+    const toggleAddInstitution = (callAPIs)=>{
         setState(prevState => {
             return {...prevState,addInstitution:!state.addInstitution};
         });
+
+        if (callAPIs){
+            getActiveInstitutions();
+            getAllInstitutions();
+        }
+    }
+
+    const toggleEditInstitution = (callAPIs,data)=>{
+        setState(prevState => {
+            return {...prevState,editInstitution:!state.editInstitution,institutionToEdit:data};
+        });
+
+        if (callAPIs){
+            getActiveInstitutions();
+            getAllInstitutions();
+        }
     }
 
     const getActiveInstitutions = ()=>{
@@ -91,7 +110,7 @@ const Institution = ()=>{
         .then((res)=>{
             setState(prevState => {
                 return {...prevState,
-                    dropdownLoading:true,
+                    
                     tableLoading:false,
                     tableData:res?.data?.map((item,index)=>{
                         return {
@@ -201,7 +220,7 @@ const Institution = ()=>{
     return (
         <div>
            <NavigationBar/>
-           {!state.addInstitution && !state.editInstituion && <Container >
+           {!state.addInstitution && !state.editInstitution && <Container >
                 <Row>
                     <Col sm="4" className="p-2">
                         <Select
@@ -220,18 +239,27 @@ const Institution = ()=>{
                     </Col>
                     <Col sm="8" className="p-2">
                         <Row className="justify-content-end"> 
-                            <Button 
-                            className="add-btn"
-                            variant="success"
-                            disabled={state.loading}
-                            onClick={()=>{}}
-                            >
-                                Export
-                            </Button> 
+                                <Button 
+                                className="add-btn p-0"
+                                variant="success"
+                                disabled={state.loading}
+                                onClick={()=>{}}
+                                >
+                                    <CSVLink 
+                                    data={state.tableData} 
+                                    headers={[{label:"Name",key:"instName"},{label:"Code",key:"instCode"}]}
+                                    filename="data.csv"
+                                    className="style-a-tag"
+                                    >
+                                        Export
+                                    </CSVLink>
+                                </Button> 
+                             
+                           
                             <Button 
                             className="add-btn mx-2"
                             disabled={state.loading}
-                            onClick={()=>{toggleAddInstitution()}}
+                            onClick={()=>{toggleAddInstitution(false)}}
                             >
                                 + Add
                             </Button> 
@@ -258,7 +286,9 @@ const Institution = ()=>{
                             {
                                 icon: "edit",
                                 tooltip: 'Edit',
-                                onClick: (event, rowData) => alert("You saved " + rowData.name)
+                                onClick: (event, rowData) => {
+                                    toggleEditInstitution(false,rowData)
+                                }
                             },
                             {
                                 icon: "delete" ,
@@ -280,6 +310,7 @@ const Institution = ()=>{
            </Container>}
 
            {state.addInstitution && <AddInstitution toggleAddInstitution={toggleAddInstitution}/>}
+           {state.editInstitution && <EditInstitution toggleEditInstitution={toggleEditInstitution} institutionToEdit={state.institutionToEdit}/>}
 
 
            <Modal

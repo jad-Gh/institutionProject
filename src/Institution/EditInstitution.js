@@ -8,53 +8,60 @@ import { ADD_INSTITUTION, CONFIG, COUNTRY_LIST } from "../API"
 import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
 
 
-const AddInstitution = (props)=>{
+const EditInstitution = (props)=>{
 
     const [state,setState] = useState({
         loading:false,
         activetab:0,
 
-        instCode:"",
-        instName:"",
-        instStatus:"0",
-        countrySelected:"",
+        instCode:props?.institutionToEdit?.instCode ?? "",
+        instName:props?.institutionToEdit?.instName ?? "",
+        instStatus:props?.institutionToEdit?.instStatus ?? "0",
+        countrySelected:
+            props?.institutionToEdit?.country 
+            ? 
+            {
+                label: props?.institutionToEdit?.country?.countryDesc,
+                value:  props?.institutionToEdit?.country?.countryId  
+            }
+            : "",
         countryList:[],
-        daysToLockUser:"",
-        sessionTimeout:"",
-        customerIdLength:"",
-        nationalIdLength:"",
-        accountNbLength:"",
-        hsmEncPinLength:"",
-        hsmPort:"",
-        hsmIp:"",
-        hsmMsgHeaderLength:"",
-        adhocRnNewExp:"0",
-        adhocRpNewExp:"0",
-        renewalOutputPath:"",
-        ecomOutputPath:"",
-        embossingOutputPath:"",
-        encryptionKey:"",
+        daysToLockUser: props?.institutionToEdit?.daysToLockUser ?? "" ,
+        sessionTimeout: props?.institutionToEdit?.sessionTimeout ?? "" ,
+        customerIdLength: props?.institutionToEdit?.customerIdLength ?? "" ,
+        nationalIdLength: props?.institutionToEdit?.nationalIdLength ?? "",
+        accountNbLength:props?.institutionToEdit?.accountNbLength ?? "",
+        hsmEncPinLength: props?.institutionToEdit?.hsmEncPinLength ?? "",
+        hsmPort:props?.institutionToEdit?.hsmPort ?? "",
+        hsmIp:props?.institutionToEdit?.hsmIp ?? "",
+        hsmMsgHeaderLength: props?.institutionToEdit?.hsmMsgHeaderLength ?? "",
+        adhocRnNewExp:props?.institutionToEdit?.adhocRnNewExp ?? "0",
+        adhocRpNewExp:props?.institutionToEdit?.adhocRpNewExp ?? "0",
+        renewalOutputPath:props?.institutionToEdit?.renewalOutputPath ?? "",
+        ecomOutputPath:props?.institutionToEdit?.ecomOutputPath ?? "",
+        embossingOutputPath:props?.institutionToEdit?.embossingOutputPath ?? "",
+        encryptionKey:props?.institutionToEdit?.encryptionKey ?? "",
 
-        hostIntegration:"0",
-        hostName:"",
-        hostUrl:"",
-        hostType:"",
-        requestBody:"",
-        responseBody:"",
+        hostIntegration: props?.institutionToEdit?.hostIntegration ?? "0",
+        hostName: props?.institutionToEdit?.hostConfiguration?.hostName ?? "",
+        hostUrl: props?.institutionToEdit?.hostConfiguration?.hostUrl ?? "",
+        hostType: props?.institutionToEdit?.hostConfiguration?.hostType ?? "",
+        requestBody: props?.institutionToEdit?.hostConfiguration?.requestBody ?? "",
+        responseBody: props?.institutionToEdit?.hostConfiguration?.responseBody ?? "",
 
-        daysToChangePassword:"",
-        warningChangePassword:"",
-        passwordLength:"",
-        passwordHistory:"",
-        upperFlag:"0",
-        upperCount:"",
-        lowerCount:"",
-        lowerFlag:"0",
-        numberCount:"",
-        numberFlag:"0",
-        specialCharactersCount:"",
-        specialCharactersFlag:"0",
-        specialCharactersList:"",
+        daysToChangePassword: props?.institutionToEdit?.daysToChangePassword ?? "",
+        warningChangePassword: props?.institutionToEdit?.warningChangePassword ?? "",
+        passwordLength: props?.institutionToEdit?.passwordPolicy?.passwordLength ?? "",
+        passwordHistory: props?.institutionToEdit?.passwordPolicy?.passwordHistory ?? "",
+        upperFlag: props?.institutionToEdit?.passwordPolicy?.upperFlag ?? "0",
+        upperCount: props?.institutionToEdit?.passwordPolicy?.upperCount ?? "",
+        lowerCount: props?.institutionToEdit?.passwordPolicy?.lowerCount ?? "",
+        lowerFlag: props?.institutionToEdit?.passwordPolicy?.lowerFlag ?? "0",
+        numberCount: props?.institutionToEdit?.passwordPolicy?.numberCount ?? "",
+        numberFlag: props?.institutionToEdit?.passwordPolicy?.numberFlag ?? "0",
+        specialCharactersCount: props?.institutionToEdit?.passwordPolicy?.specialCharactersCount ?? "",
+        specialCharactersFlag: props?.institutionToEdit?.passwordPolicy?.specialCharactersFlag ?? "0",
+        specialCharactersList: props?.institutionToEdit?.passwordPolicy?.specialCharactersList ?? "",
 
 
     })
@@ -115,7 +122,7 @@ const AddInstitution = (props)=>{
         })
     }
 
-    const addInstitution = ()=>{
+    const editInstitution = ()=>{
 
         if (validate()){
             setState(prevState => {
@@ -134,7 +141,7 @@ const AddInstitution = (props)=>{
                 "embossingOutputPath": state.embossingOutputPath,
                 "encryptionKey": state.encryptionKey,
                 "hostConfigurations": {
-                "hostId": 0,
+                "hostId": props?.institutionToEdit?.hostConfiguration?.hostId,
                 "hostName": state.hostName,
                 "hostType": state.hostType,
                 "hostUrl": state.hostUrl,
@@ -147,7 +154,7 @@ const AddInstitution = (props)=>{
                 "hsmMsgHeaderLength": state.hsmMsgHeaderLength,
                 "hsmPort": state.hsmPort,
                 "instCode": state.instCode,
-                "instId": 0,
+                "instId":  props?.institutionToEdit?.instId,
                 "instName": state.instName,
                 "instStatus": state.instStatus,
                 "nationalIdLength": state.nationalIdLength,
@@ -158,7 +165,7 @@ const AddInstitution = (props)=>{
                 "numberFlag": state.numberFlag,
                 "passwordHistory": state.passwordHistory,
                 "passwordLength": state.passwordLength,
-                "policyId": 0,
+                "policyId": props?.institutionToEdit?.passwordPolicy?.policyId,
                 "specialCharactersCount": state.specialCharactersCount,
                 "specialCharactersFlag": state.specialCharactersFlag,
                 "specialCharactersList": state.specialCharactersList,
@@ -171,8 +178,8 @@ const AddInstitution = (props)=>{
             }
             axios.post(ADD_INSTITUTION,data,CONFIG)
             .then((res)=>{
-                toast.success("Institution Added Successfully!");
-                props.toggleAddInstitution(true)
+                toast.success("Institution Updated Successfully!");
+                props.toggleEditInstitution(true)
             }).catch((err)=>{
                 if (err?.response?.status===401){
                     localStorage.clear();
@@ -183,7 +190,7 @@ const AddInstitution = (props)=>{
                             toast.error(item)
                         })
                     } else {
-                        toast.error("Error Occured Adding Institution")
+                        toast.error("Error Occured Updating Institution")
                     }
                     setState(prevState => {
                         return {...prevState,loading:false,};
@@ -227,7 +234,7 @@ const AddInstitution = (props)=>{
 
         <Container>
             <Row>
-                <h3>Add Institution</h3>
+                <h3>Edit Institution</h3>
             </Row>
             <Row center>
                 <Stepper 
@@ -782,7 +789,7 @@ const AddInstitution = (props)=>{
                 <Col md="3">
                     <Row className="d-flex justify-content-start my-1">
                         <Col>
-                            <Button variant="secondary" onClick={()=>{props.toggleAddInstitution(false)}} className="w-100">
+                            <Button variant="secondary" onClick={()=>{props.toggleEditInstitution(false)}} className="w-100">
                                 Cancel
                             </Button>
                         </Col>
@@ -804,9 +811,9 @@ const AddInstitution = (props)=>{
                             <Button 
                             variant="primary" 
                             className="w-100" 
-                            onClick={()=>{addInstitution()}} 
+                            onClick={()=>{editInstitution()}} 
                             disabled={state.loading}>
-                                {state.loading ? <HourglassEmptyIcon/> : "Add"}
+                                {state.loading ? <HourglassEmptyIcon/> : "Edit"}
                             </Button>
                             :
                             <Button 
@@ -834,4 +841,4 @@ const AddInstitution = (props)=>{
     )
 }
 
-export default AddInstitution
+export default EditInstitution
