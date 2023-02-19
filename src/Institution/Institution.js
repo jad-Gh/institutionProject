@@ -35,6 +35,8 @@ const Institution = ()=>{
 
         instNameToDelete:null,
         instIdToDelete:null,
+
+        selectedInstitution:null,
     });
 
     const navigator = useNavigate();
@@ -102,7 +104,7 @@ const Institution = ()=>{
 
     const getAllInstitutions = ()=>{
         setState(prevState => {
-            return {...prevState,tableLoading:true};
+            return {...prevState,tableLoading:true,selectedInstitution:null};
         });
 
         CONFIG.headers.Authorization = "Bearer " + localStorage.getItem("token");
@@ -128,6 +130,48 @@ const Institution = ()=>{
                                     />
                         }
                     })
+                };
+            });
+        }).catch((err)=>{
+            if (err?.response?.status===401){
+                localStorage.clear();
+                navigator("/")
+            }else {
+                toast.error(err?.response?.data?.message ?? "Error Occured Fetching Table Institutions")
+                setState(prevState => {
+                    return {...prevState,tableLoading:false,};
+                });
+            }
+        })
+    }
+
+    const getInstitution = (inst)=>{
+        setState(prevState => {
+            return {...prevState,tableLoading:true,selectedInstitution:inst};
+        });
+
+        CONFIG.headers.Authorization = "Bearer " + localStorage.getItem("token");
+        axios.get(`${GET_INSTITUTIONS}/${inst?.value}`,CONFIG)
+        .then((res)=>{
+            setState(prevState => {
+                return {...prevState,
+                    
+                    tableLoading:false,
+                    tableData:[{
+                        ...res?.data,
+                        enabled:<Form.Check 
+                        type="switch"
+                        id={`custom-switch${12345}`}
+                        label={res?.data?.instStatus==="1" ? "Enabled" : "Disabled"}
+                        checked={res?.data?.instStatus==="1"}
+                        onClick={()=>{
+                            if (!state.loading)
+                            changeStatus(res?.data?.instId,res?.data?.instStatus==="1" ? "0":"1")
+                        }}
+                        disabled={state.loading}
+                        />
+
+                    }]
                 };
             });
         }).catch((err)=>{
@@ -232,9 +276,17 @@ const Institution = ()=>{
                             isClearable={true}
                             // isRtl={isRtl}
                             isSearchable={true}
+                            value={state.selectedInstitution}
                             // name="color"
                             options={state.activeInstitutions}
                             isLoading={state.dropdownLoading}
+                            onChange={(e)=>{
+                                if (e?.value){
+                                    getInstitution(e)
+                                } else {
+                                    getAllInstitutions()
+                                }
+                            }}
                         />
                     </Col>
                     <Col sm="8" className="p-2">
@@ -246,7 +298,7 @@ const Institution = ()=>{
                                 onClick={()=>{}}
                                 >
                                     <CSVLink 
-                                    data={state.tableData} 
+                                    data={Array.isArray(state.tableData)?state.tableData:[state.tableData]} 
                                     headers={[{label:"Name",key:"instName"},{label:"Code",key:"instCode"}]}
                                     filename="data.csv"
                                     className="style-a-tag"

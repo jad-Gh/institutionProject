@@ -195,7 +195,16 @@ const AddInstitution = (props)=>{
     }
 
     const validate = ()=>{
+
+        let specialList = "!@#$%^&*()_+=-][{}\|';/.,:?><\" "
+
         if (state.activetab===0){
+
+            if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(state.instCode)){
+                toast.error("Please Enter a valid Institution Code")
+                return false;
+            }
+
             if (!/^\d+(\.\d+)*$/.test(state.hsmIp) && state.hsmIp!==""){
                 toast.error("Please Enter a valid HSM IP")
                 return false;

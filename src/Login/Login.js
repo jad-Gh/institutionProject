@@ -59,6 +59,10 @@ const Login = ()=>{
                                     </Col>
                                 </Row>
                                 <Row className="dynamic-spacing">
+                                    <form onSubmit={(e)=>{
+                                        e.preventDefault();
+                                        signIn();
+                                    }}>
                                     <Row>
                                         <Col className="text-start">
                                             Username
@@ -100,11 +104,15 @@ const Login = ()=>{
                                     <Button 
                                     className="mt-3" 
                                     disabled={!state.username || !state.password  || state.loading}
-                                    onClick={()=>{signIn()}}
+                                    // onClick={()=>{signIn()}}
+                                    type="submit"
+                                    style={{width:"100%"}}
                                     >
                                         {!state.loading ? "Login" : <HourglassEmptyIcon/>}
                                     </Button>
+                                    </form>
                                 </Row>   
+                                
                             </Card>
                         </Col>
                     </Row>
